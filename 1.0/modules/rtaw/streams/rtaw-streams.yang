@@ -1,0 +1,564 @@
+module rtaw-streams {
+  yang-version 1.1;
+  namespace "urn:fr:rtaw:pegase:yang:rtaw-streams";
+  prefix pS;
+
+  import ieee802-dot1q-types {
+    prefix dot1qtypes;
+  }
+  import ietf-network {
+    prefix network;
+  }
+
+  organization
+        "RealTime-at-Work";
+  contact
+        "RealTime-at-Work
+           https://www.realtimeatwork.com
+           <mailto:lionel.havet@realtimeatwork.com>
+    
+        Editor:
+           Damien GUIDOLIN--PINA
+             <mailto:damien.guidolin@realtimeatwork.com>
+           Lionel HAVET
+             <mailto:lionel.havet@realtimeatwork.com>";
+  description
+    "Description of traffic models available in RTaW-Pegase (work-in-progress)";
+
+  revision 2021-10-12 {
+    description
+      "Initial revision.";
+  }
+  
+  revision 2022-04-15 {
+    description
+      "Add missing size type for induced stream type";
+  }
+
+  typedef frame-ref {
+    type leafref {
+      path "/pS:streams/pS:stream/pS:name";
+    }
+    description
+      "Used to reference a frame";
+  }
+
+  grouping frameComNeed-ref {
+    description
+      "Contains the information necessary to reference a frameComNeed";
+    leaf frameComNeed-ref {
+      type leafref {
+        path "/pS:streams/pS:name";
+        require-instance false;
+      }
+      description
+        "Used to reference a frameComNeed";
+    }
+  }
+
+  grouping interval-type {
+    description
+            "The interval is a rational number of seconds,
+             defined by an integer numerator and an integer
+             denominator.
+
+             If the time-aware container is not present,
+             the interval specifies a sliding window of time.
+             The Talker’s transmission is not synchronized
+             to a time on the network, and therefore
+             the traffic specification cannot be exceeded
+             during any interval in time.
+
+             If the time-aware container is present,
+             the interval specifies a window of time that is
+             aligned with the time epoch that is synchronized
+             on the network. For example, if IEEE Std
+             802.1AS-2011 is used with the PTP timescale,
+             the first interval begins at 1 January 00:00:00 TAI.
+             If CurrentTime represents the current time, then
+             the start of the next interval (StartOfNextInterval)
+             is:
+                  StartOfNextInterval = N * interval
+             where N is the smallest integer for which the relation
+                  StartOfNextInterval >= CurrentTime
+             would be TRUE.";
+    reference
+      "46.2.3.5.1 of IEEE Std 802.1Qcc-2018";
+    leaf numerator {
+      type uint32;
+      description
+        "interval’s numerator.";
+    }
+    leaf denominator {
+      type uint32;
+      description
+        "interval’s denominator.";
+    }
+  }
+
+  typedef size-def {
+    type uint16;
+    description
+      "Maximal Ethernet frame size in bytes; the range depends on the “SizeType” property.
+            EthernetFrameSyze : [0,1518]
+            EthernetFrameSyzeQTAG: [0,1522]
+            UDP payload : [0,65507]
+            UDP payload QTAG : [0,65503]
+            AFDX payload : [0,1471]
+            AVTP/H.264 : [0,1472]";
+    reference
+      "6.1.4.3 Arrival Models of RTaW-Pegase Ethernet User Manual";
+  }
+
+  typedef size-type-def {
+    type enumeration {
+      enum ETHERNET_FRAME_SIZE;
+      enum ETHERNET_FRAME_SIZE_QTAG;
+      enum UDP_PAYLOAD_IPV4;
+      enum AFDX_PAYLOAD;
+      enum AVTP_PAYLOAD_H264_CVF;
+    }
+    description
+      "Since a frame size may include different kinds headers (IP, UDP, AFDX) or describe the complete size of the frames, a “SizeType” needs to be specified:
+
+           EthernetFrameSyze : Includes all except the 20 bytes of the Preamble (7 bytes), the Start of Frame Delimiter (1 byte) and the Inter Frame Gap (12 bytes).
+       
+           EthernetFrameSyzeQTAG : As the previous one, but the size is supposed to include the 4 bytes of the Q-TAG
+
+           UDPpayload : The size is supposed to only cover the UDP payload. For simulation, WCTT or load computations, the tool adds the headers to achieve the complete line size, form Preamble to IFG.
+
+           UDPpayloadQTAG : Same as the previous, but the tool also adds the 4 bytes of the Q-TAG.
+
+           AFDXpayload : The size is supposed to only cover the AFDX payload. For simulation, WCTT or load computations, the tool adds the headers to achieve the complete line size, form Preamble to IFG.
+
+           AVTP-H264 : H.264 compressed video payload, transported by AVTP. For simulation, WCTT or load computations, the tool adds 4 bytes for the H.264 header, 24 bytes for the AVTP header and 18 bytes for MAC, Ethernet Type and CRC to reach the Ethernet frame size.";
+           
+    reference
+      "6.1.4.3 Arrival Models of RTaW-Pegase Ethernet User Manual";
+  }
+
+  grouping comPattern-type {
+  	choice comPattern-type {
+  	  container tftp {
+  	  	description
+  	  	  "The “Trivial FTP” protocol allows to transfer files over UDP, see
+			RFC1350.";
+        
+        container source-node {
+          uses interface-ref;
+        }
+        container target-node {
+          uses interface-ref;
+        } 
+	    leaf resp-frame {
+	      type frame-ref;
+	    }
+        leaf req-frame {
+            type frame-ref;
+        }
+        leaf data-frame {
+            type frame-ref;
+        }        
+        container config {
+	      description
+	        "Describes a config.
+	         A stream typically contains a name.";
+	      leaf name {
+	        type string;
+	        description
+	          "config Name";
+	      }
+	      leaf payload {
+	        description
+	          "The amount of by to be transmitted.
+				If you are more interested by the throughput,
+				you may chose a smaller amount than the
+				actual one. With a smaller amount, the delay
+				of the transmission is shorter, which allows
+				to set a shorter period and induces more
+				transmission during the same simulation
+				horizon.";
+		      type uint32;
+	      }
+	      container maxDataElaborationDelay {
+	        description
+	          "Maximal delay between the reception of the
+				Read Request or Acknowledgment frame and
+				the queuing of the next Data frame.";
+		    container interval {
+	            uses interval-type;
+	          }
+	      }
+	      container maxAckElaborationDelay {
+	        description 
+	          "Maximal delay between the reception of the
+				Data frame and the queuing of the next
+				Acknowledgment frame.";
+	        container interval {
+	            uses interval-type;
+	          }
+	        }
+	      container period {
+	        description
+	          "The period specifies the time between
+				consecutive repetition of the communication
+				pattern during a simulation.
+				But, if the previous transmission session is
+				not finished when the periodic timer expires
+				for the next transmission, then that
+				transmission is skipped.
+				If transmission sessions are skipped, then it
+				is not guaranteed that the maximal delay.";
+	        container interval {
+	            uses interval-type;
+	          }
+	      }
+  	  }
+  	 }
+  	 container dialogOverEthernet {
+  	   leaf name {
+          type string;
+        }
+        container source-node {
+          description
+            "The sender of the first frame and
+			the consecutive frame and also the
+			receiver for the control flow and
+			the acknowledgment frame.";
+          uses interface-ref;
+        }
+        container target-node {
+          description
+            "The receiver for the first frame and
+			the consecutive frame and also the
+			sender for the control flow and the
+			acknowledgment frame.";
+          uses interface-ref;
+        }
+        leaf req-frame {
+          description 
+            "reference to the request Frame.";
+          type frame-ref;
+        }
+        leaf resp-frame {
+          description
+            "Reference to the response frame.";
+          type frame-ref;
+        }
+        container config {
+          leaf name {
+            description
+              "Name of the occurrence model.";
+            type string;
+          }
+          container period {
+            description
+              "The period specifies the time between consecutive
+				repetition of the communication pattern during a
+				simulation.
+				But, if the previous transmission session is not
+				finished when the periodic timer expires for the next
+				transmission, then that transmission is skipped.
+				If transmission sessions are skipped, then it is not
+				guaranteed that the maximal delay observed during the
+				simulation can be reproduced (Unfavorable Scenarios).
+				To make sure that the maximal delays can be
+				reproduced, the period must be longer than the
+				maximal delay so that no session is skipped.
+				A report associated with the simulation warns if
+				transmission sessions have been skipped and how to
+				adapt the period.";
+            container interval {
+	            uses interval-type;
+	          }
+          }
+          container responseDelay {
+            description
+              "Delay between the reception of a request frame, and
+				the instantiation of the expected response frame.";
+            container interval {
+	            uses interval-type;
+	          }
+          }
+        }
+  	 }
+  	 
+  	  container tcp {
+		leaf name {
+          type string;
+        }
+        container source-node {
+          description
+            "The sender of the first frame and
+			the consecutive frame and also the
+			receiver for the control flow and
+			the acknowledgment frame.";
+          uses interface-ref;
+        }
+        container target-node {
+          description
+            "The receiver for the first frame and
+			the consecutive frame and also the
+			sender for the control flow and the
+			acknowledgment frame.";
+          uses interface-ref;
+        }
+         leaf server-frame {
+	      type frame-ref;
+	    }
+        leaf client-frame {
+            type frame-ref;
+        }
+        container sendingPeriod {
+        	container interval {
+	            uses interval-type;
+	          }
+        }
+        leaf sendingAmount {
+        	type uint32;
+        }
+        container config {
+          leaf name {
+            description
+              "Name of the occurrence model.";
+            type string;
+          }
+          leaf nagelsAlgorithm {
+          	type boolean;
+          }
+          leaf minRTO {
+           type uint64;
+           units "us";
+          }
+          leaf congestionControl {
+          	type boolean;
+          }
+          leaf rxBufferSize {
+          	type uint64;
+          	units "byte";
+          }
+          leaf minAckAmount {
+          	type enumeration {
+          		enum ONE_MSS;
+          		enum TWO_MSS;
+          		enum QUICK_ACK;
+          	}
+          }
+          leaf maxAckDelay {
+          	type uint64;
+          	units "us";
+          }
+        }
+  	  }
+  	}
+  }
+  
+
+
+
+  grouping stream-type {
+    choice stream-type {
+   	  container induced {
+   	  	leaf max-size {
+          type uint16;
+          description
+            "Maximal Ethernet frame size in bytes; the exact meaning depends on the “SizeType” property.";
+        }
+        leaf sizetype {
+          type size-type-def;
+        }
+   	  }
+   	  
+   	  container leaky-bucket {
+   	  	description
+   	  		"This choice contains the parameters for leaky bucket flows.";
+        leaf max-size {
+          type size-def;
+          description
+            "Maximal Ethernet frame size in bytes; the exact meaning depends on the “SizeType” property.";
+        }
+        leaf sizetype {
+          type size-type-def;
+        }
+        leaf max-rate {
+          description
+            "Maximal bit rate of the leaky bucket flow (kbit/s).";
+          type uint32;
+        }
+   	  }
+      container periodic {
+        description
+          "This choice contains the parameters for periodic flows.
+           A periodic transmission model is defined by a period for the queuing times and the (maximal) size of the frame.";
+        leaf size {
+          type size-def;
+          description
+            "Maximal Ethernet frame size in bytes; the exact meaning depends on the “SizeType” property.";
+        }
+        leaf sizetype {
+          type size-type-def;
+        }
+        container period {
+          container interval {
+            uses interval-type;
+          }
+          description
+            "Fixed temporal distance between two consecutive queuing times of the frame.";
+        }
+      }
+      container periodic-burst {
+        description
+          "This choice contains the parameters for periodic flows with burst.
+           A PeriodicBurst model describes the periodic arrival of bursts of frames, as can be observed, for example, with video streams.";
+        leaf size {
+          type size-def;
+          description
+            "Maximal Ethernet frame size in bytes; the exact meaning depends on the “SizeType” property.";
+        }
+        leaf sizetype {
+          type size-type-def;
+        }
+        leaf burst-size {
+          type uint16;
+          description
+            "Number of frames in the burst.";
+        }
+        container period {
+          container interval {
+            uses interval-type;
+          }
+          description
+            "Fixed temporal distance between two consecutive frame bursts.";
+        }
+        container min-distance {
+          container interval {
+            uses interval-type;
+          }
+          description
+            "Minimal temporal distance between two consecutive queuing times of the frame. If equal to 0, then all frames of the bursts are queued at the same time, otherwise their queuing times are “spread out”.";
+        }
+        leaf sizeOfLast {
+          type uint16;
+          description
+            "Size of the last frame of a burst.";
+        }
+      }
+      container sporadic {
+        description
+          "This choice contains the parameters for sporadic flows.
+           A sporadic transmission model is based on a maximal size of the packets and a minimal distance between consecutive arrivals. Note that a periodic transmission is a special case of sporadic transmission where all frame inter-arrival times are exactly equal to the period.";
+        leaf max-size {
+          type uint16;
+          description
+            "Maximal Ethernet frame size in bytes; the exact meaning depends on the “SizeType” property.";
+        }
+        leaf sizetype {
+          type size-type-def;
+        }
+        container min-distance {
+          container interval {
+            uses interval-type;
+          }
+          description
+            "Nominal minimal distance, expressed in ms, between two consecutive frames of the same frame flow, at the entrance of the network. It should be noted that this nominal distance is altered by the 'Max Tx Jitter' specified for the Nodes.
+             In the AFDX context, the minimal distance is called BAG (bandwidth allocation gap).";
+        }
+      }
+    }
+  }
+
+  grouping interface-ref {
+    description
+      "This grouping manage to reference the destination";
+    leaf mac-address {
+      type string {
+        pattern '[0-9a-fA-F]{2}(-[0-9a-fA-F]{2}){5}';
+      }
+      description
+        "mac-address is the EUI-48 MAC address (IEEE Std 802)
+         of the interface in the station (end station or Bridge).
+         This MAC address uniquely identifies the station within
+         the local network.
+
+         mac-address shall be included in an instance of
+         a container using group-interface-id.
+
+         NOTE — This MAC address can be discovered in the
+         physical topology using protocols such as
+         IEEE Std 802.1AB (LLDP). LLDP supports MAC address
+         as a subtype for the station’s Chassis ID and Port ID.
+         If the station does not use MAC address for its LLDP IDs,
+         remote management can be used to associate this mac-address
+         to the values provided in the LLDP IDs.
+
+         The string uses the hexadecimal representation
+         specified in IEEE Std 802 (i.e. canonical format).";
+    }
+    uses network:node-ref;
+  }
+
+  container streams {
+    description
+      "Data set containing all the frame communication needs specifications";
+    leaf name {
+      type string;
+      description
+        "frameComNeed Name";
+    }
+    list stream {
+      key "name";
+      description
+        "Describes a stream.
+         A stream typically contains a name.";
+      leaf name {
+        type string;
+        description
+          "Stream Name";
+      }
+      leaf priority {
+        type dot1qtypes:priority-type;
+        description
+          "Stream priority";
+      }
+      container sender {
+        uses interface-ref;
+      }
+      container receivers {
+        list receiver {
+          key "index";
+          leaf index {
+            type uint8;
+          }
+          uses interface-ref;
+        }
+      }
+      
+      uses stream-type;
+      
+      leaf txOffset {
+        type uint32;
+        description
+          "A TxOffsetConfig allows to specify transmission offsets for frames in ns";
+      }
+    }
+  }
+  
+  container comPattern {  
+  	description
+  		"Contains all the patterns of communication";
+  	leaf name {
+  		type string;
+  		description
+  			"The name of the comPattern.";
+  	}
+    list comPatternConfig {
+    	key "index";
+         leaf index {
+            type uint8;
+         }
+         
+    	uses comPattern-type;
+    }
+    
+  }
+}

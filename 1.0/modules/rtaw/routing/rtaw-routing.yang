@@ -1,0 +1,56 @@
+module rtaw-routing {
+  yang-version 1.1;
+  namespace "urn:fr:rtaw:pegase:yang:rtaw-routing";
+  prefix routing;
+
+  import rtaw-streams {
+    prefix stream;
+  }
+  import ietf-network {
+    prefix nw;
+  }
+
+  organization
+        "RealTime-at-Work";
+  contact
+        "RealTime-at-Work
+           https://www.realtimeatwork.com
+           <mailto:lionel.havet@realtimeatwork.com>
+    
+        Editor:
+           Damien GUIDOLIN--PINA
+             <mailto:damien.guidolin@realtimeatwork.com>
+           Lionel HAVET
+             <mailto:lionel.havet@realtimeatwork.com>";
+  description
+    "Description of routing in a RTaW-Pegase model (work-in-progress)";
+
+  revision 2021-10-12 {
+    description
+      "Initial revision.";    
+  }
+
+  container routing {
+    description
+      "Data set containing all the routing";
+    uses nw:network-ref;
+    uses stream:frameComNeed-ref;
+    list frame {
+      key "frame-ref";
+      leaf frame-ref {
+        type stream:frame-ref;
+      }      
+      container routes {
+        list route {
+          key "index";
+          leaf index {
+            type int8;
+          }
+          leaf-list node {
+            type nw:node-id;
+          }
+        }
+      }
+    }
+  }
+}

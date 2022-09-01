@@ -1,0 +1,36 @@
+module rtaw-interfaces {
+  yang-version 1.1;
+  namespace "urn:ietf:params:xml:ns:yang:rtaw-interfaces";
+  prefix interf;
+
+  import ietf-interfaces {
+    prefix if;
+  }
+  import ietf-network-topology {
+    prefix topo;
+  }
+
+  organization
+    "RealTime-at-Work";
+  contact
+    "RealTime-at-Work
+       https://www.realtimeatwork.com
+       <mailto:lionel.havet@realtimeatwork.com>
+
+     Editor:
+       Damien GUIDOLIN--PINA
+         <mailto:damien.guidolin@realtimeatwork.com>
+       Lionel HAVET
+         <mailto:lionel.havet@realtimeatwork.com>";
+  description
+    "Work in progress, augment interfaces with topology reference for RTaW-Pegase import";
+
+  revision 2021-10-12 {
+    description
+      "Initial revision.";
+  }
+
+  augment "/if:interfaces/if:interface" {
+    uses topo:tp-ref;
+  }
+}

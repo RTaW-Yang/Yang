@@ -1,0 +1,67 @@
+module rtaw-network-topology {
+  yang-version 1.1;
+  namespace "urn:ietf:params:xml:ns:yang:rtaw-network-topology";
+  prefix nt;
+
+  import ietf-network {
+    prefix nw;
+  }
+  import ietf-network-topology {
+    prefix topo;
+  }
+
+  organization
+      "RealTime-at-Work";
+  contact
+      "RealTime-at-Work
+         https://www.realtimeatwork.com
+         <mailto:lionel.havet@realtimeatwork.com>
+  
+      Editor:
+         Damien GUIDOLIN--PINA
+           <mailto:damien.guidolin@realtimeatwork.com>
+         Lionel HAVET
+           <mailto:lionel.havet@realtimeatwork.com>";
+  description
+    "Augment the description of the topology of Pegase. 
+    	Use to export more details (rate of links and node allocations). 
+    	Also useful to import in PEGASE (Work In Progress)";
+
+  revision 2021-10-12 {
+    description
+      "Initial revision.";    
+  }
+  revision 2022-04-15 {
+    description
+      "Add unit for rate.";    
+  }
+
+  augment "/nw:networks/nw:network/nw:node" {
+    description
+      "Enumeration of different topology entities";
+    leaf node-type {
+      type enumeration {
+        enum switch;
+        enum end-system;
+        enum internal-node;
+        enum internal-switch;
+      }
+    }
+    leaf nodeAllocatedTo {
+      type nw:node-id;
+      description
+      	"If the End-System is allocated to a Switch, the switch is referenced here.";
+    }
+  }
+
+  augment "/nw:networks/nw:network/topo:link" {
+    description
+      "Ethernet link speed in Mbps between two connected entities";
+    leaf rate {
+      type uint32;
+      units "Mbps";
+      description
+        "Maximum speed on the link.";
+    }
+  }
+}

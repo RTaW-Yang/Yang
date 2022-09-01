@@ -1,0 +1,291 @@
+module rtaw-cbs {
+
+  /*** NAMESPACE / PREFIX DEFINITION ***/
+
+  namespace "urn:ieee:std:802.1:yang:ieee802-dot1-fqtss-cbs";
+  
+  prefix ieee8021-fqtss;
+
+  /*** LINKAGE (IMPORTS / INCLUDES) ***/
+
+  import ietf-interfaces {
+      prefix if;
+  }
+
+  /*** META INFORMATION ***/
+
+  organization
+          "RealTime-at-Work";
+    contact
+          "RealTime-at-Work
+             https://www.realtimeatwork.com
+             <mailto:lionel.havet@realtimeatwork.com>
+      
+          Editor:
+             Damien GUIDOLIN--PINA
+               <mailto:damien.guidolin@realtimeatwork.com>
+             Lionel HAVET
+               <mailto:lionel.havet@realtimeatwork.com>";
+    description
+      "RTaW CBS/Priority handling Yang module, derived from IEEE8021-FQTSS-CBS MiB (Work in progress)";
+  
+    revision 2021-10-12 {
+      description
+        "Initial revision.";
+  }
+
+  /*** TYPE DEFINITIONS ***/
+
+  typedef IEEE8021FqtssTrafficClassValue {
+    type uint32 {
+      range "0..7";
+    }
+    description     
+     "An 802.1 FQTSS traffic class value.
+      This is the numerical value associated with a traffic
+      class in a Bridge. Larger values are associated with
+      higher priority traffic classes.";
+    reference       
+     "12.20.1";
+  }
+
+  typedef IEEE8021FqtssDeltaBandwidthValue {
+    type uint32 {
+      range "0..100000000";
+    }
+    description     
+     "An 802.1 FQTSS delta bandwidth percentage,
+      represented as a fixed point number scaled by
+      1,000,000.";
+    reference       
+     "12.20.1, 34.4";
+  }
+
+  typedef IEEE8021FqtssTxSelectionAlgorithmIDValue {
+    type uint32;
+    description     
+     "An 802.1 transmission selection algorithm identifier
+      value. This is an integer, with the following
+      interpretation placed on the value:
+      
+      0: Strict priority algorithm,
+      1: Credit-based shaper algorithm,
+      2: Enhanced Transmission Selection algorithm,
+      3-255: Reserved for future standardization,
+      256-4294967295: Vendor-specific transmission selection
+                      algorithm identifiers, consisting of a 
+                      four-octet integer, where the most
+                      significant 3 octets hold an OUI or CID value,
+                      and the least significant octet holds
+                      an integer value in the range 0-255
+                      assigned by the owner of the OUI or CID.";
+    reference       
+     "8.6.8, 12.20.2";
+  }
+
+  container ieee8021FqtssBap {
+
+
+    /* XXX table comments here XXX */
+
+    list ieee8021FqtssBapEntry {
+
+      key "port ieee8021FqtssBAPTrafficClass";
+      description   
+       "A list of objects containing bandwidth allocation
+        information for each traffic class that supports the
+        credit-based shaper algorithm. Rows in the table are
+        automatically created and deleted as a result of the 
+        operation of the algorithm described in 34.5. ";
+
+      leaf port {
+        type if:interface-ref;
+        
+        description 
+         "Automagically generated keyref leaf.";
+      }      
+
+      leaf ieee8021FqtssBAPTrafficClass {
+        type IEEE8021FqtssTrafficClassValue;
+        config true;
+        description 
+         "The traffic class number associated with the row of
+          the table.
+          
+          A row in this table is created for each traffic class
+          that supports the credit-based shaper algrithm. The
+          recommended mappings of priorities to traffic classes
+          for support of the credit-based shaper algorithm are
+          described in 34.5.";
+        reference   
+         "12.20.2, 34.3, 34.5";
+      }
+
+      leaf ieee8021FqtssDeltaBandwidth {
+        type ieee8021-fqtss:IEEE8021FqtssDeltaBandwidthValue;
+        units "percent";
+        config true;
+        description 
+         "The value of the deltaBandwidth parameter
+          for the traffic class.
+          This value is represented as a fixed point number
+          scaled by a factor of 1,000,000; i.e., 100,000,000
+          (the maximum value) represents 100%.
+          
+          The default value of the deltaBandwidth parameter 
+          for the highest numbered traffic class that supports
+          the credit-based shaper algorithm is 75%; for all
+          lower numbered traffic classes that support the
+          credit-based shaper algorithm the default value is 0%.
+          
+          The value of this object MUST be retained across
+          reinitializations of the management system.";
+        reference   
+         "12.20.1, 34.3";
+      }
+
+      leaf ieee8021FqtssOperIdleSlopeMs {
+        type uint32;
+        units "bits per second";
+        config false;
+        description 
+         "The most significant 32 bits of the bandwidth, 
+          in bits per second, that is currently allocated to the
+          traffic class (idleSlope(N)). This object MUST be read  
+          at the same time as ieee8021FqtssOperIdleSlopeLs, 
+          which represents the LS 32 bits of the value, in order
+          for the read operation to succeed.
+          
+          If SRP is supported and in operation, then the reserved  
+          bandwidth is determined by the operation of SRP; otherwise, 
+          the value of ieee8021FqtssOperIdleSlopeMs is equal to 
+          the value of ieee8021FqtssAdminIdleSlopeMs.
+          
+          The value of this object MUST be retained across
+          reinitializations of the management system.";
+        reference   
+         "12.20.1, 34.3";
+      }
+
+      leaf ieee8021FqtssOperIdleSlopeLs {
+        type uint32;
+        units "bits per second";
+        config false;
+        description 
+         "The least significant 32 bits of the bandwidth, 
+          in bits per second, that is currently allocated to the
+          traffic class (idleSlope(N)). This object MUST be read  
+          at the same time as ieee8021FqtssOperIdleSlopeMs, 
+          which represents the LS 32 bits of the value, in order
+          for the read operation to succeed.
+          
+          If SRP is supported and in operation, then the reserved  
+          bandwidth is determined by the operation of SRP; otherwise, 
+          the value of ieee8021FqtssOperIdleSlopeLs is equal to
+          the value of ieee8021FqtssAdminIdleSlopeMs.
+          
+          The value of this object MUST be retained across
+          reinitializations of the management system.";
+        reference   
+         "12.20.1, 34.3";
+      }
+
+      leaf ieee8021FqtssAdminIdleSlopeMs {
+        type uint32;
+        units "bits per second";
+        config true;
+        description 
+         "The most significant 32 bits of the bandwidth, 
+          in bits per second, that the manager desires to allocate
+          to the traffic class as  idleSlope(N). This object MUST be  
+          read or written at the same time as 
+          ieee8021FqtssAdminIdleSlopeLs, 
+          which represents the LS 32 bits of the value, in order
+          for the read or write operation to succeed.
+          
+          If SRP is supported and in operation, then the reserved  
+          bandwidth is determined by the operation of SRP, and any
+          changes to the value of this object have no effect on the
+          operational value of idleSlope(N).
+          
+          The value of this object MUST be retained across
+          reinitializations of the management system.";
+        reference   
+         "12.20.1, 34.3";
+      }
+
+      leaf ieee8021FqtssAdminIdleSlopeLs {
+        type uint32;
+        units "bits per second";
+        config true;
+        description 
+         "The least significant 32 bits of the bandwidth, 
+          in bits per second, that the manager desires to allocate
+          to the traffic class as  idleSlope(N). This object MUST be  
+          read or written at the same time as 
+          ieee8021FqtssAdminIdleSlopeMs, 
+          which represents the LS 32 bits of the value, in order
+          for the read or write operation to succeed.
+          
+          If SRP is supported and in operation, then the reserved  
+          bandwidth is determined by the operation of SRP, and any
+          changes to the value of this object have no effect on the
+          operational value of idleSlope(N).
+          
+          The value of this object MUST be retained across
+          reinitializations of the management system.";
+        reference   
+         "12.20.1, 34.3";
+      }
+    }
+  }
+
+  container ieee8021FqtssMappings {
+
+
+    /* XXX table comments here XXX */
+
+    list ieee8021FqtssTxSelectionAlgorithmEntry {
+
+      key "port 
+           ieee8021FqtssTrafficClass";
+      description   
+       "A list of objects that contain the mapping of a
+        traffic class value to a transmission selection algorithm
+        value.";
+
+       leaf port {
+              type if:interface-ref;
+              
+              description 
+               "Automagically generated keyref leaf.";
+      }     
+
+      leaf ieee8021FqtssTrafficClass {
+        type ieee8021-fqtss:IEEE8021FqtssTrafficClassValue;
+        config true;
+        description 
+         "The traffic class to which the transmission selection
+          algorithm is assigned.
+          
+          The value of this object MUST be retained across
+          reinitializations of the management system.";
+        reference   
+         "8.6.8, 12.20.2, 34.5";
+      }
+
+      leaf ieee8021FqtssTxSelectionAlgorithmID {
+        type ieee8021-fqtss:IEEE8021FqtssTxSelectionAlgorithmIDValue;
+        config true;
+        description 
+         "The identifier of the transmission selection algorithm
+          assigned to the traffic class.
+          
+          The value of this object MUST be retained across
+          reinitializations of the management system.";
+        reference   
+         "8.6.8, 12.20.2, 34.5";
+      }
+    }
+  }
+} /* end of module IEEE8021-FQTSS-CBS */

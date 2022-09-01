@@ -1,0 +1,98 @@
+module rtaw-services {
+  yang-version 1.1;
+  namespace "urn:fr:rtaw:pegase:yang:rtaw-services";
+  prefix Services;
+
+  import rtaw-streams {
+    prefix pS;
+  }
+  import ietf-network {
+    prefix network;
+  }
+
+  organization
+    "RealTime-at-Work";
+  contact
+    "RealTime-at-Work
+     https://www.realtimeatwork.com
+     <mailto:lionel.havet@realtimeatwork.com>
+
+   Editor:
+     Damien GUIDOLIN--PINA
+      <mailto:damien.guidolin@realtimeatwork.com>
+     Lionel HAVET
+      <mailto:lionel.havet@realtimeatwork.com>";
+  description
+    "Description of service models available in RTaW-Pegase (work-in-progress)";
+
+  revision 2021-10-12 {
+    description
+      "Initial revision.";
+  }
+
+  typedef frame-ref {
+    type leafref {
+      path "/pS:streams/pS:stream/pS:name";
+    }
+    description
+      "Used to reference a frame";
+  }
+
+  grouping ServiceItem-type {
+    choice serviceItem-type {
+      container serviceEvent {
+        leaf data {
+          type string;
+        }
+        leaf serviceFrame-data {
+          type frame-ref;
+        }
+      }
+      container serviceMethod {
+        leaf call {
+          type string;
+        }
+        leaf serviceFrame-call {
+          type frame-ref;
+        }
+        leaf return {
+          type string;
+        }
+        leaf serviceFrame-return {
+          type frame-ref;
+        }
+      }
+    }
+  }
+
+  container someIP {
+    leaf name {
+      type string;
+    }
+    list service {
+      key "name";
+      leaf name {
+        description
+          "the name of the service.";
+        type string;
+      }
+      container provider {
+        uses network:node-ref;
+      }
+      list serviceItem {
+        key "name";
+        leaf name {
+          type string;
+        }
+        uses ServiceItem-type;
+        list subscriber {
+          key "index";
+          leaf index {
+            type uint8;
+          }
+          uses network:node-ref;
+        }
+      }
+    }
+  }
+}
