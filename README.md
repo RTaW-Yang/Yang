@@ -25,6 +25,6 @@ Following changes were made in modules in order to solve Sysrepo import issues, 
  - ieee802-dot1q-psfp :  removed some 'must' checks comparison on fractional-grouping seems not supported, added some missing prefixes
 
 # Contact
-contact@realtimeatwork.com
+lionel.havet@realtimeatwork.com
 
 
