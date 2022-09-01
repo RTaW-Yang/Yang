@@ -1,6 +1,6 @@
 # Yang
 
-This repository contains the list of Yang modules to which [RTaW-Pegase](www.realtimeatwork.com/rtaw-pegase/) and [TSN-Configurator](https://tsn.studio) YANG-XML export complies.
+This repository contains the list of Yang modules to which [RTaW-Pegase](https://www.realtimeatwork.com/rtaw-pegase/) and [TSN-Configurator](https://tsn.studio) YANG-XML export complies.
 
 
 
@@ -8,7 +8,7 @@ Structure of the repository
  - **ieee**: standard modules (published or drafts) intended for IEEE submission
  - **ietf**: standard IETF YANG modules
  - **iana**: standard IANA YANG modules
- - **rtaw**: [RTaW](www.realtimeatwork.com) specific YANG modules
+ - **rtaw**: [RTaW](https://www.realtimeatwork.com) specific YANG modules
 
 # RTaW specific modules
 - **cbs**: module specifying idle slope configuraiton on output port queues.
