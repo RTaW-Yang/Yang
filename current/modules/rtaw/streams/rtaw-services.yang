@@ -85,6 +85,7 @@ module rtaw-services {
           type string;
         }
         uses ServiceItem-type;
+		uses pS:stream-type;
         list subscriber {
           key "index";
           leaf index {

@@ -17,6 +17,11 @@ Structure of the repository
 - **extensions**: extensions to standard module in the.
 
 # Change log
+ - Version 1.1 for RTaW-Pegase 4.3.6:
+ -- Added service arrival pattern
+ -- moved vendor specific extensions from 'topology' to 'extensions'
+ - Version 1.0 : initial version of Yang modules for RTaW-Pegase 4.3.5 and TSN.configurator1.2.1
+# Standard modules Change log
 Following changes were made in modules in order to solve Sysrepo import issues, the changes are highlighted in the yang modules as well.
 
  - ieee802-dot1q-types : obsolete is not recognized, obsolete grouping type removed and new grouping renamed
@@ -25,6 +30,6 @@ Following changes were made in modules in order to solve Sysrepo import issues, 
  - ieee802-dot1q-psfp :  removed some 'must' checks comparison on fractional-grouping seems not supported, added some missing prefixes
 
 # Contact
-lionel.havet@realtimeatwork.com
+lionel(dot)havet(at)realtimeatwork.com
 
 
